@@ -192,7 +192,7 @@ export default {
 
     // 设置占位区域
     async setPlacehold() {
-      const { windowHeight } = this.systemInfo
+      const { windowHeight, screenHeight } = this.systemInfo
       const [headerRect, footerRect, containerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer'), this.getDomRect('.container')])
       this.headerPlaceholderHeight = headerRect.height
       this.footerPlaceholderHeight = footerRect.height
@@ -201,8 +201,8 @@ export default {
         const safeBottmRect = await this.getDomRect('.safe-bottom-ghost')
         this.safeBottmHeight = safeBottmRect.height
       }
-      this.headerTop = containerRect.top
-      this.footerTop = containerRect.top + containerRect.height - footerRect.height - this.safeBottmHeight
+      this.headerTop = containerRect.top + this.isH5 ? screenHeight - windowHeight : 0
+      this.footerTop = containerRect.top + containerRect.height - footerRect.height - this.safeBottmHeight + (this.isH5 ? screenHeight - windowHeight : 0)
     },
 
     // 主动监听头部底部内容变化，目前仅支持H5
@@ -236,6 +236,7 @@ export default {
   },
   created() {
     this.systemInfo = uni.getSystemInfoSync()
+    console.log(this.systemInfo)
     this.setCustomNavBar()
 
     this.isMp &&
