@@ -1,0 +1,27 @@
+{
+  "name": "@dimple-smile/uni-container",
+  "version": "0.0.1",
+  "description": "用于uniapp的页面容器组件，兼容ios默认回弹，头部底部支持动态插槽内容，支持自定义导航栏，自动设置安全距离。",
+  "main": "/dimple-uni-container.vue",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dimple-smile/dimple-uni-container.git"
+  },
+  "keywords": [
+    "uniapp",
+    "页面容器",
+    "固定头部底部",
+    "禁用回弹",
+    "安全距离",
+    "自定义导航栏"
+  ],
+  "author": "dimple-smile",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dimple-smile/dimple-uni-container/issues"
+  },
+  "homepage": "https://github.com/dimple-smile/dimple-uni-container#readme",
+  "scripts": {
+    "public": "npm publish --access public"
+  }
+}
