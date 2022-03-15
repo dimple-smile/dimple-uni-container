@@ -10,19 +10,17 @@
         <!-- 标题栏 -->
         <view v-if="titleBarHeight > 0" class="title-bar" :style="computedTitleBarStyle">
           <!-- 标题栏左侧 -->
-          <slot name="titleLeft">
-            <view
-              class="back-icon-container"
-              :width="menuRect.width"
-              :style="{ width: isIos ? menuRect.width + 'px' : 'auto', paddingLeft: menuRect.rightGap + 'px', paddingRight: menuRect.rightGap + 'px' }"
-              @click="back"
-            >
-              <image class="back-icon" :style="backIconStyle" :src="backIcon" mode="aspectFit" />
-            </view>
-          </slot>
+
+          <view :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginLeft: menuRect.rightGap + 'px', marginRight: menuRect.rightGap + 'px' }">
+            <slot name="titleLeft">
+              <view class="back-icon-container" :style="{ height: titleBarHeight + 'px' }" @click="back">
+                <image class="back-icon" :style="backIconStyle" :src="backIcon" mode="aspectFit" />
+              </view>
+            </slot>
+          </view>
 
           <!-- 标题栏内容 -->
-          <view class="title-bar-content" :class="{ android: isAndroid }" :style="{ height: titleBarHeight + 'px' }">
+          <view class="title-bar-content" :style="{ height: titleBarHeight + 'px' }">
             <slot name="titleContent">
               <view class="title-bar-content-title" :style="{ lineHeight: titleBarHeight + 'px' }">
                 {{ title }}
@@ -31,9 +29,9 @@
           </view>
 
           <!-- 标题栏右侧 -->
-          <slot name="titleRight" :width="menuRect.width" :rightGap="menuRect.rightGap">
-            <view class="title-bar-right" :style="{ width: isMp ? menuRect.width + 'px' : 'auto', marginRight: menuRect.rightGap + 'px', marginLeft: menuRect.rightGap + 'px' }"></view>
-          </slot>
+          <view class="title-bar-right" :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginRight: menuRect.rightGap + 'px', marginLeft: menuRect.rightGap + 'px' }">
+            <slot name="titleRight"> </slot>
+          </view>
         </view>
       </view>
 
@@ -322,6 +320,9 @@ export default {
   flex: 1;
   text-align: center;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .title-bar-content-title {
@@ -330,10 +331,6 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.title-bar-content.android {
-  text-align: left;
 }
 
 .back-icon-container {
