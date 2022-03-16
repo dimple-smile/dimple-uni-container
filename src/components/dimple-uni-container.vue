@@ -195,7 +195,7 @@ export default {
       this.headerPlaceholderHeight = headerRect.height
       this.footerPlaceholderHeight = footerRect.height
       const needSafeBottom = containerRect.bottom === windowHeight
-      if (needSafeBottom) {
+      if (needSafeBottom && this.footerPlaceholderHeight > 0) {
         const safeBottmRect = await this.getDomRect('.safe-bottom-ghost')
         this.safeBottmHeight = safeBottmRect.height
       }
