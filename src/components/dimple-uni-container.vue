@@ -57,7 +57,10 @@
     <!-- footer -->
     <view ref="footer" class="footer" :style="{ background: footerBackground, top: footerTop + 'px' }">
       <!-- footer slot -->
-      <slot name="footer"></slot>
+
+      <view class="footer-slot">
+        <slot name="footer"></slot>
+      </view>
 
       <!-- footer安全底部占位区域  -->
       <view v-if="safeBottmHeight > 0" class="safe-bottom-placeholder" :style="{ background: footerBackground, height: safeBottmHeight + 'px' }"> </view>
@@ -191,16 +194,19 @@ export default {
     // 设置占位区域
     async setPlacehold() {
       const { windowHeight, screenHeight } = this.systemInfo
-      const [headerRect, footerRect, containerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer'), this.getDomRect('.container')])
+      const [headerRect, footerSlotRect, containerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer-slot'), this.getDomRect('.container')])
       this.headerPlaceholderHeight = headerRect.height
-      this.footerPlaceholderHeight = footerRect.height
-      const needSafeBottom = containerRect.bottom === windowHeight
-      if (needSafeBottom && this.footerPlaceholderHeight > 0) {
+      this.footerPlaceholderHeight = footerSlotRect.height
+
+      const needSafeBottom = containerRect.bottom === windowHeight && this.footerPlaceholderHeight > 0
+      this.safeBottmHeight = 0
+      if (needSafeBottom) {
         const safeBottmRect = await this.getDomRect('.safe-bottom-ghost')
         this.safeBottmHeight = safeBottmRect.height
       }
+
       this.headerTop = containerRect.top + this.isH5 ? screenHeight - windowHeight : 0
-      this.footerTop = containerRect.top + containerRect.height - footerRect.height - this.safeBottmHeight + (this.isH5 ? screenHeight - windowHeight : 0)
+      this.footerTop = containerRect.top + containerRect.height - this.footerPlaceholderHeight - this.safeBottmHeight + (this.isH5 ? screenHeight - windowHeight : 0)
     },
 
     // 主动监听头部底部内容变化，目前仅支持H5
