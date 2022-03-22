@@ -227,7 +227,7 @@ export default {
     back() {
       if (this.customBack) return this.$emit('back')
       const pages = getCurrentPages()
-      if (pages.length === 1) return uni.navigateBack()
+      if (pages.length > 1) return uni.navigateBack()
       if (this.homeUrl) uni.reLaunch({ url: this.homeUrl })
     },
   },
