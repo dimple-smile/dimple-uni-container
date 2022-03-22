@@ -170,7 +170,7 @@ export default {
       const rect = uni.getMenuButtonBoundingClientRect()
       const { screenWidth } = this.systemInfo
       rect.rightGap = screenWidth - rect.right
-      rect.height = 44
+      rect.height = this.isIos ? 44 : 48
       return rect
     },
 
@@ -203,6 +203,12 @@ export default {
       await this.$nextTick()
 
       const [headerRect, footerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer-slot')])
+      if (this.isH5) {
+        const [h5Header] = document.getElementsByTagName('uni-page-head')
+        headerRect.top += h5Header.clientHeight
+        footerRect.top += h5Header.clientHeight
+      }
+
       this.headerFixedStyle = {
         position: 'fixed',
         height: headerRect.height + 'px',
@@ -210,7 +216,6 @@ export default {
         left: headerRect.left + 'px',
       }
       this.headerPlaceholderStyle = { height: headerRect.height + 'px' }
-
       if (footerRect.height > 0) {
         this.footerFixedStyle = {
           position: 'fixed',
