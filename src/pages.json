@@ -6,6 +6,7 @@
 
       "style": {
         "navigationBarTitleText": "dimple-uni-container"
+        // "navigationStyle": "custom"
       }
     },
     {

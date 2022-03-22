@@ -93,6 +93,7 @@ export default {
 | homeUrl | 返回首页的地址 | String | /pages/index/index | 开启自定义导航栏后，点击返回，页面栈长度为1时会尝试返回首页 |
 | backIcon | 返回图标路径 | String | base64 | 默认是官方返回icon的base64字符串，因为是字符串，另外可以传入网络地址 |
 | backIconStyle | 返回图标的样式 | String | height: 17px;width: 9px; | 默认使用官方sketch资源里的宽高 |
+| mutation | 突变数据 | any | 无 | 绑定的突变数据，绑定后，此数据改变会重新布局，用于异步的header和footer内容 |
 
 ### 插槽
 

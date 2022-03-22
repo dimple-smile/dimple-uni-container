@@ -1,7 +1,7 @@
 <template>
   <view class="container" :style="{ height: computedHeight, background: background }">
     <!-- header -->
-    <view ref="header" class="header" :style="{ top: headerTop + 'px' }">
+    <view ref="header" class="header" :style="[headerFixedStyle]">
       <!-- 自定义nav-bar -->
       <view v-if="customNavBar" class="nav-bar" :style="navBarStyle">
         <!-- 状态栏 -->
@@ -39,31 +39,25 @@
       <slot name="header"></slot>
     </view>
 
-    <!-- header占位区域 -->
-    <view class="header-placeholder" :style="{ height: headerPlaceholderHeight + 'px', background: background }"> </view>
+    <view :style="[headerPlaceholderStyle]"> </view>
 
     <!-- 内容区 -->
     <view class="content">
       <!-- 默认slot -->
       <slot></slot>
     </view>
-
-    <!-- footer占位区域 -->
-    <view v-if="footerPlaceholderHeight > 0" class="footer-placeholder" :style="{ height: footerPlaceholderHeight + 'px', background: background }"> </view>
-
-    <!-- 安全底部占位区域 -->
-    <view v-if="safeBottmHeight > 0" class="safe-bottom-placeholder" :style="{ height: safeBottmHeight + 'px' }"> </view>
+    <view :style="[footerPlaceholderStyle]"> </view>
 
     <!-- footer -->
-    <view ref="footer" class="footer" :style="{ background: footerBackground, top: footerTop + 'px' }">
+    <view ref="footer" class="footer" :style="{ background: footerBackground }">
       <!-- footer slot -->
 
-      <view class="footer-slot">
+      <view class="footer-slot" :style="[footerFixedStyle]">
         <slot name="footer"></slot>
       </view>
 
       <!-- footer安全底部占位区域  -->
-      <view v-if="safeBottmHeight > 0" class="safe-bottom-placeholder" :style="{ background: footerBackground, height: safeBottmHeight + 'px' }"> </view>
+      <!-- <view v-if="safeBottmHeight > 0" class="safe-bottom-placeholder" :style="{ background: footerBackground, height: safeBottmHeight + 'px' }"> </view> -->
     </view>
 
     <!-- 用于计算安全距离的元素，uni的统一api还存在未解决的bug，先使用幽灵元素计算安全距离 -->
@@ -72,8 +66,6 @@
 </template>
 
 <script>
-let resizeObserver = null
-
 export default {
   name: 'dimple-uni-container',
   props: {
@@ -93,16 +85,19 @@ export default {
         'data:image/svg+xml;base64,PHN2ZyBjbGFzcz0ibXlzdmciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI4Ljk5ODEwODUwNjU3NTEzNiIgaGVpZ2h0PSIxNyIgdmlld0JveD0iMCAwIDguOTk4MTA4NTA2NTc1MTM2IDE3IiBmaWxsPSJub25lIj48cGF0aCBpZD0i5Zu+5qCH6aKc6ImyIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHN0eWxlPSJmaWxsOiMwMDAwMDAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIuMTY4NDA0MzQ0OTcxMDA5ZS0xOSAwKSAgcm90YXRlKDAgNC40OTkwNTQyNTMyODc1NzggOC41KSIgb3BhY2l0eT0iMC45IiBkPSJNMS42OCw4LjVMOSwxLjA2TDcuOTUsMEwwLjI4LDcuOEMtMC4xLDguMTkgLTAuMSw4LjgxIDAuMjgsOS4yTDcuOTUsMTdMOSwxNS45NEwxLjY4LDguNVogIj48L3BhdGg+PC9zdmc+',
     },
     backIconStyle: { type: String, default: 'height: 17px;width: 9px;' }, // 返回icon的样式
+    mutation: {}, // 突变数据，该数据变化会触发布局变化
   },
   data() {
     return {
       systemInfo: {}, // 记录系统信息
       loading: true, // 加载标识
-      containerHeight: {},
-      headerPlaceholderHeight: 0, // header占位高度
-      footerPlaceholderHeight: 0, // footer占位高度
-      headerTop: 0,
-      footerTop: 0,
+
+      headerFixedStyle: {},
+      footerFixedStyle: {},
+
+      headerPlaceholderStyle: {},
+      footerPlaceholderStyle: {},
+
       safeBottmHeight: 0, // 安全距离高度
       customNavBar: false, // 是否开启自定义navbar的标识
       statusBarHeight: 0, // 自定义navbar状态栏高度
@@ -149,6 +144,14 @@ export default {
       return (this.systemInfo.platform + this.systemInfo.system).toLowerCase().indexOf('android') > -1
     },
   },
+  watch: {
+    mutation: {
+      handler() {
+        this.setStyle()
+      },
+      deep: true,
+    },
+  },
   methods: {
     // 根据classname获取dom元素clientRect信息，并把方法promise化
     getDomRect(className) {
@@ -163,11 +166,11 @@ export default {
 
     // 获取胶囊Rect信息，兼容写法
     getMenuButtonRect() {
-      if (this.isH5 || this.isApp) return { height: 44, width: 90, topGap: 10, rightGap: 10 }
+      if (this.isH5 || this.isApp) return { height: 44, width: 90, rightGap: 10 }
       const rect = uni.getMenuButtonBoundingClientRect()
-      const { statusBarHeight, screenWidth } = this.systemInfo
-      rect.topGap = rect.top - statusBarHeight
+      const { screenWidth } = this.systemInfo
       rect.rightGap = screenWidth - rect.right
+      rect.height = 44
       return rect
     },
 
@@ -180,50 +183,45 @@ export default {
       // 开启自定义导航栏，设置自定义导航的style
       const { statusBarHeight } = this.systemInfo
       this.menuRect = this.getMenuButtonRect()
-      const { height, topGap } = this.menuRect
+      const { height } = this.menuRect
       this.statusBarHeight = statusBarHeight
-      this.titleBarHeight = height + topGap * 2
+      this.titleBarHeight = height
     },
 
     // 设置安全距离高度
     async setSafeHeight() {
       const safeBottmRect = await this.getDomRect('.safe-bottom-ghost')
-      this.safeBottmHeight = safeBottmRect.height
+      this.safeBottmHeight = safeBottmRect.height / 2
     },
 
     // 设置占位区域
-    async setPlacehold() {
-      const { windowHeight, screenHeight } = this.systemInfo
-      const [headerRect, footerSlotRect, containerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer-slot'), this.getDomRect('.container')])
-      this.headerPlaceholderHeight = headerRect.height
-      this.footerPlaceholderHeight = footerSlotRect.height
+    async setStyle() {
+      this.headerFixedStyle = {}
+      this.footerFixedStyle = {}
+      this.headerPlaceholderStyle = {}
+      this.footerPlaceholderStyle = {}
+      await this.$nextTick()
 
-      const needSafeBottom = containerRect.bottom === windowHeight && this.footerPlaceholderHeight > 0
-      this.safeBottmHeight = 0
-      if (needSafeBottom) {
-        const safeBottmRect = await this.getDomRect('.safe-bottom-ghost')
-        this.safeBottmHeight = safeBottmRect.height
+      const [headerRect, footerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer-slot')])
+      this.headerFixedStyle = {
+        position: 'fixed',
+        height: headerRect.height + 'px',
+        top: headerRect.top + 'px',
+        left: headerRect.left + 'px',
       }
+      this.headerPlaceholderStyle = { height: headerRect.height + 'px' }
 
-      this.headerTop = containerRect.top + this.isH5 ? screenHeight - windowHeight : 0
-      this.footerTop = containerRect.top + containerRect.height - this.footerPlaceholderHeight - this.safeBottmHeight + (this.isH5 ? screenHeight - windowHeight : 0)
+      if (footerRect.height > 0) {
+        this.footerFixedStyle = {
+          position: 'fixed',
+          height: footerRect.height + this.safeBottmHeight + 'px',
+          top: footerRect.top - this.safeBottmHeight + 'px',
+          left: footerRect.left + 'px',
+          background: this.footerBackground,
+        }
+        this.footerPlaceholderStyle = { height: footerRect.height + this.safeBottmHeight + 'px', background: this.background }
+      }
     },
-
-    // 主动监听头部底部内容变化，目前仅支持H5
-    // async addContentResizeObserver(ins, bottom) {
-    //   await this.$nextTick()
-    //   // h5模式下换成原生api实现
-    //   if (this.isH5) {
-    //     ins = new ResizeObserver(async (e) => {
-    //       const [headerRect, footerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer')])
-    //       this.headerPlaceholderHeight = headerRect.height
-    //       this.footerPlaceholderHeight = footerRect.height
-    //     })
-    //     ins.observe(this.$refs.header.$el)
-    //     ins.observe(this.$refs.footer.$el)
-    //     return
-    //   }
-    // },
 
     // 返回方法
     back() {
@@ -232,68 +230,41 @@ export default {
       if (pages.length === 1) return uni.navigateBack()
       if (this.homeUrl) uni.reLaunch({ url: this.homeUrl })
     },
-
-    // 回流方法，用于异步头部底部内容调用
-    reflow() {
-      return this.setPlacehold()
-    },
   },
   created() {
     this.systemInfo = uni.getSystemInfoSync()
-    console.log(this.systemInfo)
     this.setCustomNavBar()
-
-    this.isMp &&
-      uni.setBackgroundColor({
-        backgroundColor: this.background,
-        backgroundColorTop: this.background,
-        backgroundColorBottom: this.background,
-      })
   },
   async mounted() {
-    this.loading = true
-    await this.$nextTick()
-    await this.setPlacehold()
-    await this.$nextTick()
-    this.loading = false
-  },
-  destroyed() {
-    resizeObserver && resizeObserver.disconnect()
+    await this.setSafeHeight()
+    this.setStyle()
   },
 }
 </script>
 
 <style scoped>
 .container {
+  width: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .header {
-  position: fixed;
-  left: 0;
-  top: 0;
   width: 100%;
   overflow: hidden;
   z-index: 1;
 }
 
 .footer {
-  position: fixed;
-  left: 0;
-  top: 0;
   width: 100%;
   overflow: hidden;
   z-index: 1;
 }
 
-.safe-bottom {
-  position: fixed;
-  bottom: 0;
-  left: 0;
+.footer-slot {
   width: 100%;
-  height: constant(safe-area-inset-bottom);
-  /* 兼容 iOS < 11.2 */
-  height: env(safe-area-inset-bottom);
+  overflow: hidden;
+  z-index: 1;
 }
 
 .safe-bottom-ghost {
