@@ -3,7 +3,7 @@
     <!-- header -->
     <view ref="header" class="header" :style="[headerFixedStyle]">
       <!-- 自定义nav-bar -->
-      <view v-if="customNavBar" class="nav-bar" :style="navBarStyle">
+      <view v-if="isCustomNavBar" class="nav-bar" :style="navBarStyle">
         <!-- 状态栏 -->
         <view v-if="statusBarHeight > 0" class="status-bar" :style="computedStatusBarStyle"></view>
 
@@ -86,6 +86,8 @@ export default {
     },
     backIconStyle: { type: String, default: 'height: 17px;width: 9px;' }, // 返回icon的样式
     mutation: {}, // 突变数据，该数据变化会触发布局变化
+
+    customNavBar: { type: Boolean }, // 是否开启自定义头
   },
   data() {
     return {
@@ -99,7 +101,7 @@ export default {
       footerPlaceholderStyle: {},
 
       safeBottmHeight: 0, // 安全距离高度
-      customNavBar: false, // 是否开启自定义navbar的标识
+      isCustomNavBar: false, // 是否开启自定义navbar的标识
       statusBarHeight: 0, // 自定义navbar状态栏高度
       titleBarHeight: 0, // 自定义navbar标题栏高度
       menuRect: {}, // 小程序胶囊按钮的rect信息
@@ -176,10 +178,11 @@ export default {
 
     // 设置自定义导航栏
     setCustomNavBar() {
+      if(this.customNavBar === false) return
       if (this.height) return
       const { windowHeight, screenHeight } = this.systemInfo
-      this.customNavBar = windowHeight === screenHeight
-      if (!this.customNavBar) return
+      this.isCustomNavBar = this.customNavBar || windowHeight === screenHeight
+      if (!this.isCustomNavBar) return
       // 开启自定义导航栏，设置自定义导航的style
       const { statusBarHeight } = this.systemInfo
       this.menuRect = this.getMenuButtonRect()
