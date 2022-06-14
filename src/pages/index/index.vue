@@ -1,7 +1,7 @@
 <template>
-  <d-container>
+  <d-container title="test" :mutation="mutation">
     <template #header>
-      <view class="header"> header </view>
+      <view class="header" v-if="headerVisible"> header </view>
     </template>
     <d-scroll :total="total" :skip="skip" :limit="limit" @fetch="fetch">
       <view class="scroll-content">
@@ -9,7 +9,9 @@
       </view>
     </d-scroll>
     <template #footer>
-      <view class="footer"> footer </view>
+      <view>
+        <view class="footer" v-if="footerVisible">footer</view>
+      </view>
     </template>
   </d-container>
 </template>
@@ -25,7 +27,17 @@ export default {
       total: -1,
       skip: -1,
       limit: 20,
+      headerVisible: false,
+      footerVisible: false,
     }
+  },
+  computed: {
+    mutation() {
+      return {
+        headerVisible: this.headerVisible,
+        footerVisible: this.footerVisible,
+      }
+    },
   },
   methods: {
     async fetch(e) {
@@ -55,6 +67,12 @@ export default {
     uni.showLoading({ title: '加载中' })
     await this.getData()
     uni.hideLoading()
+    setTimeout(() => {
+      this.headerVisible = true
+      setTimeout(() => {
+        this.footerVisible = true
+      }, 2000)
+    }, 2000)
   },
 }
 </script>
