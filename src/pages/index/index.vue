@@ -1,11 +1,11 @@
 <template>
-  <d-container title="test" :mutation="mutation">
+  <d-container title="dimple-uni-container" :mutation="mutation">
     <template #header>
       <view class="header" v-if="headerVisible"> header </view>
     </template>
     <d-scroll :total="total" :skip="skip" :limit="limit" @fetch="fetch">
       <view class="scroll-content">
-        <view v-for="(item, index) in list" :key="index" class="scroll-item">{{ index + 1 }}</view>
+        <view v-for="(item, index) in list" :key="index" class="scroll-item">{{ item + 1 }}</view>
       </view>
     </d-scroll>
     <template #footer>
@@ -41,11 +41,13 @@ export default {
   },
   methods: {
     async fetch(e) {
+      uni.showLoading({ title: '加载中' })
       const { stop } = e
       try {
         await this.getData(e)
       } catch {}
       stop()
+      uni.hideLoading()
     },
     async getData(options = {}) {
       const { page = 1, skip = 0, limit = this.limit } = options

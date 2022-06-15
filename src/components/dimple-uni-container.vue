@@ -1,47 +1,7 @@
 <template>
-  <view v-if="!loading" ref="container" class="container" :style="{ height: computedHeight, background: background }">
-    <!-- header -->
-    <view class="header" :style="[headerFixedStyle]">
-      <!-- 自定义nav-bar -->
-      <view v-if="isCustomNavBar" class="nav-bar" :style="navBarStyle">
-        <!-- 状态栏 -->
-        <view v-if="statusBarHeight > 0" class="status-bar" :style="computedStatusBarStyle"></view>
-
-        <!-- 标题栏 -->
-        <view v-if="titleBarHeight > 0" class="title-bar" :style="computedTitleBarStyle">
-          <!-- 标题栏左侧 -->
-
-          <view :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginLeft: menuRect.rightGap + 'px', marginRight: menuRect.rightGap + 'px' }">
-            <slot name="titleLeft">
-              <view class="back-icon-container" :style="{ height: titleBarHeight + 'px' }" @click="back">
-                <image class="back-icon" :style="backIconStyle" :src="backIcon" mode="aspectFit" />
-              </view>
-            </slot>
-          </view>
-
-          <!-- 标题栏内容 -->
-          <view class="title-bar-content" :style="{ height: titleBarHeight + 'px' }">
-            <slot name="titleContent">
-              <view class="title-bar-content-title" :style="{ lineHeight: titleBarHeight + 'px' }">
-                {{ title }}
-              </view>
-            </slot>
-          </view>
-
-          <!-- 标题栏右侧 -->
-          <view class="title-bar-right" :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginRight: menuRect.rightGap + 'px', marginLeft: menuRect.rightGap + 'px' }">
-            <slot name="titleRight"> </slot>
-          </view>
-        </view>
-      </view>
-
-      <!-- header slot-->
-      <slot name="header"></slot>
-    </view>
-
+  <view ref="container" class="container" :style="{ height: computedHeight, background: background }">
     <!-- header placeholder-->
-    <view class="header-placeholder" :style="[headerPlaceholderStyle]"> </view>
-
+    <view class="header" :style="[headerPlaceholderStyle]"> </view>
     <!-- 内容区 -->
     <view ref="content" class="content">
       <!-- 默认slot -->
@@ -49,16 +9,55 @@
         <slot></slot>
       </view>
     </view>
-
     <!-- footer placeholder-->
-    <view class="footer-placeholder" :style="[footerPlaceholderStyle]"></view>
+    <view class="footer" :style="[footerPlaceholderStyle]"> </view>
 
-    <!-- footer -->
-    <view ref="footer" class="footer" :style="[footerFixedStyle]">
-      <div class="footer-slot">
-        <slot name="footer"></slot>
-      </div>
-      <view v-if="safeBottmVisible" ref="safeBottom" class="safe-bottm" :style="{ background: footerBackground }"></view>
+    <view class="fixed-container" :style="[{ height: computedHeight }, fixedContainerStyle]">
+      <!-- header -->
+      <view class="fixed-header">
+        <!-- 自定义nav-bar -->
+        <view v-if="isCustomNavBar" class="nav-bar" :style="navBarStyle">
+          <!-- 状态栏 -->
+          <view v-if="statusBarHeight > 0" class="status-bar" :style="computedStatusBarStyle"></view>
+
+          <!-- 标题栏 -->
+          <view v-if="titleBarHeight > 0" class="title-bar" :style="computedTitleBarStyle">
+            <!-- 标题栏左侧 -->
+
+            <view :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginLeft: menuRect.rightGap + 'px', marginRight: menuRect.rightGap + 'px' }">
+              <slot name="titleLeft">
+                <view class="back-icon-container" :style="{ height: titleBarHeight + 'px' }" @click="back">
+                  <image class="back-icon" :style="backIconStyle" :src="backIcon" mode="aspectFit" />
+                </view>
+              </slot>
+            </view>
+
+            <!-- 标题栏内容 -->
+            <view class="title-bar-content" :style="{ height: titleBarHeight + 'px' }">
+              <slot name="titleContent">
+                <view class="title-bar-content-title" :style="{ lineHeight: titleBarHeight + 'px' }">
+                  {{ title }}
+                </view>
+              </slot>
+            </view>
+
+            <!-- 标题栏右侧 -->
+            <view class="title-bar-right" :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginRight: menuRect.rightGap + 'px', marginLeft: menuRect.rightGap + 'px' }">
+              <slot name="titleRight"> </slot>
+            </view>
+          </view>
+        </view>
+        <!-- header slot-->
+        <slot name="header"></slot>
+      </view>
+      <view class="fixed-content"></view>
+      <!-- footer -->
+      <view class="fixed-footer">
+        <view class="footer-slot">
+          <slot name="footer"></slot>
+        </view>
+        <view class="safe-bottom" :style="[{ background: footerBackground }]"></view>
+      </view>
     </view>
   </view>
 </template>
@@ -92,11 +91,9 @@ export default {
       systemInfo: {}, // 记录系统信息
       loading: false, // 加载标识
 
-      headerFixedStyle: {},
-      footerFixedStyle: {},
-
       headerPlaceholderStyle: {},
       footerPlaceholderStyle: {},
+      fixedContainerStyle: {},
 
       isCustomNavBar: false, // 是否开启自定义navbar的标识
       statusBarHeight: 0, // 自定义navbar状态栏高度
@@ -158,19 +155,13 @@ export default {
   methods: {
     // 根据classname获取dom元素clientRect信息，并把方法promise化
     getDomRect(className) {
-      // const query = uni.createSelectorQuery().in(this)
-      return new Promise((res) => {
-        uni.getSystemInfo({
-          success: () => {
-            let info = uni.createSelectorQuery().in(this).select(className)
-            info
-              .boundingClientRect((data) => {
-                res(data)
-              })
-              .exec()
-          },
-        })
-      })
+      const query = uni.createSelectorQuery().in(this)
+      return new Promise((res) =>
+        query
+          .select(className)
+          .boundingClientRect((data) => res(data))
+          .exec()
+      )
     },
 
     // 获取胶囊Rect信息，兼容写法
@@ -205,43 +196,28 @@ export default {
 
     // 设置占位区域
     async setStyle() {
-      this.safeBottmVisible = true
-      this.headerFixedStyle = {}
-      this.footerFixedStyle = {}
+      this.fixedContainerStyle = {}
       this.headerPlaceholderStyle = {}
       this.footerPlaceholderStyle = {}
-
+      this.safeBottmVisible = true
       await this.$nextTick()
-
-      let containerRect = {}
-      let contentRect = {}
-      let headerHeight = 0
-      let footerHeight = 0
-
-      if (this.isMp || this.isApp) {
-        const [containerRectRes, contentRectRes] = await Promise.all([this.getDomRect('.container'), this.getDomRect('.content')])
-        containerRect = containerRectRes
-        contentRect = contentRectRes
-        footerHeight = containerRect.height - containerRect.top - contentRect.top - contentRect.height
+      const [containerRect, fixedHeaderRect, fixedFooterRect, safeBottomRect] = await Promise.all([
+        this.getDomRect('.container'),
+        this.getDomRect('.fixed-header'),
+        this.getDomRect('.fixed-footer'),
+        this.getDomRect('.safe-bottom'),
+      ])
+      this.safeBottmVisible = safeBottomRect.height !== fixedFooterRect.height
+      this.headerPlaceholderStyle = { height: fixedHeaderRect.height + 'px', background: this.background }
+      this.footerPlaceholderStyle = { height: (this.safeBottmVisible ? fixedFooterRect.height : 0) + 'px', background: this.background }
+      let fixedContainerTop = containerRect.left
+      if (this.isH5) fixedContainerTop += this.systemInfo.windowTop
+      this.fixedContainerStyle = {
+        position: 'fixed',
+        top: fixedContainerTop + 'px',
+        left: containerRect.left + 'px',
+        width: containerRect.width + 'px',
       }
-
-      if (this.isH5) {
-        containerRect = this.$refs.container.$el.getBoundingClientRect()
-        contentRect = this.$refs.content.$el.getBoundingClientRect()
-        const footerRect = this.$refs.footer.$el.getBoundingClientRect()
-        const safeBottomRect = this.$refs.safeBottom.$el.getBoundingClientRect()
-        footerHeight = footerRect.height
-        if (footerRect.height === safeBottomRect.height) footerHeight = 0
-      }
-
-      headerHeight = contentRect.top - containerRect.top
-      if (footerHeight === 0) this.safeBottmVisible = false
-
-      this.headerPlaceholderStyle = { height: headerHeight + 'px', background: this.background }
-      this.headerFixedStyle = { position: 'fixed', top: contentRect.top - headerHeight + 'px', zIndex: 1 }
-
-      this.footerPlaceholderStyle = { height: footerHeight + 'px', background: this.background }
-      this.footerFixedStyle = { position: 'fixed', top: contentRect.top + contentRect.height + 'px', zIndex: 1 }
     },
 
     // 返回方法
@@ -268,28 +244,55 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+  pointer-events: all;
 }
 
 .header {
   width: 100%;
+  min-height: 1px;
 }
 
 .footer {
   width: 100%;
+  min-height: 1px;
 }
 
-.safe-bottm {
+.safe-bottom {
   height: calc(env(safe-area-inset-bottom) / 2);
 }
 
 .content {
   flex: 1;
   overflow: hidden;
+  z-index: 1;
 }
 
 .content-slot {
   height: 100%;
   overflow: auto;
+  z-index: 1;
+}
+
+.fixed-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+}
+.fixed-container .fixed-header {
+  z-index: 2;
+}
+.fixed-container .fixed-content {
+  flex: 1;
+  pointer-events: none;
+}
+
+.fixed-container .fixed-footer {
+  z-index: 2;
 }
 
 .nav-bar {
