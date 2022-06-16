@@ -59,6 +59,7 @@
         <view class="safe-bottom" :style="[{ background: footerBackground }]"></view>
       </view>
     </view>
+    <slot name="fixed"></slot>
   </view>
 </template>
 
@@ -179,7 +180,6 @@ export default {
       if (this.customNavBar === false) return
       if (this.height) return
       const { windowTop, screenHeight, windowHeight } = this.systemInfo
-      console.log(this.systemInfo)
       let isCustomNavBar = false
       if (this.isMp || this.isApp) isCustomNavBar = screenHeight === windowHeight
       if (this.isH5) isCustomNavBar = windowTop === 0
@@ -279,20 +279,24 @@ export default {
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
+  pointer-events: none;
 }
-.fixed-container .fixed-header {
-  z-index: 2;
+
+.fixed-header {
+  pointer-events: all;
+  width: 100%;
 }
 .fixed-container .fixed-content {
   flex: 1;
   pointer-events: none;
+  z-index: -1;
 }
-
-.fixed-container .fixed-footer {
-  z-index: 2;
+.fixed-footer {
+  pointer-events: all;
+  width: 100%;
 }
 
 .nav-bar {
