@@ -84,26 +84,21 @@ export default {
     },
     backIconStyle: { type: String, default: 'height: 17px;width: 9px;' }, // 返回icon的样式
     mutation: {}, // 突变数据，该数据变化会触发布局变化
-
     customNavBar: {}, // 是否开启自定义头
-
-    contentZindex: { type: Number, default: 1 },
-    fixedZindex: { type: Number, default: 0 },
+    contentZindex: { type: Number, default: 1 }, // 内容区zindex
+    fixedZindex: { type: Number, default: 0 }, // 固定区（header和footer）zindex
   },
   data() {
     return {
       systemInfo: {}, // 记录系统信息
       loading: false, // 加载标识
-
       headerPlaceholderStyle: {},
       footerPlaceholderStyle: {},
       fixedContainerStyle: {},
-
       isCustomNavBar: false, // 是否开启自定义navbar的标识
       statusBarHeight: 0, // 自定义navbar状态栏高度
       titleBarHeight: 0, // 自定义navbar标题栏高度
       menuRect: {}, // 小程序胶囊按钮的rect信息
-
       safeBottmVisible: true, // 是否显示安全距离
     }
   },
