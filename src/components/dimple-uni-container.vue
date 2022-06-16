@@ -1,5 +1,5 @@
 <template>
-  <view ref="container" class="container" :style="{ height: computedHeight, background: background }">
+  <view ref="container" class="container" :style="{ zIndex: contentZindex, height: computedHeight, background: background }">
     <!-- header placeholder-->
     <view class="header" :style="[headerPlaceholderStyle]"> </view>
     <!-- 内容区 -->
@@ -12,7 +12,7 @@
     <!-- footer placeholder-->
     <view class="footer" :style="[footerPlaceholderStyle]"> </view>
 
-    <view class="fixed-container" :style="[{ height: computedHeight }, fixedContainerStyle]">
+    <view class="fixed-container" :style="[{ height: computedHeight, zIndex: fixedZindex }, fixedContainerStyle]">
       <!-- header -->
       <view class="fixed-header">
         <!-- 自定义nav-bar -->
@@ -86,6 +86,9 @@ export default {
     mutation: {}, // 突变数据，该数据变化会触发布局变化
 
     customNavBar: {}, // 是否开启自定义头
+
+    contentZindex: { type: Number, default: 1 },
+    fixedZindex: { type: Number, default: 0 },
   },
   data() {
     return {
@@ -250,12 +253,12 @@ export default {
 
 .header {
   width: 100%;
-  min-height: 1px;
+  z-index: -1;
 }
 
 .footer {
   width: 100%;
-  min-height: 1px;
+  z-index: -1;
 }
 
 .safe-bottom {
@@ -279,7 +282,7 @@ export default {
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 2;
+  z-index: 0;
   display: flex;
   flex-direction: column;
   pointer-events: none;
@@ -289,10 +292,9 @@ export default {
   pointer-events: all;
   width: 100%;
 }
-.fixed-container .fixed-content {
+.fixed-content {
   flex: 1;
   pointer-events: none;
-  z-index: -1;
 }
 .fixed-footer {
   pointer-events: all;
