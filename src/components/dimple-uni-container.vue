@@ -9,61 +9,37 @@
         <slot></slot>
       </view>
     </view>
-    <!-- footer placeholder-->
-    <view class="footer" :style="[footerPlaceholderStyle]"> </view>
 
-    <view class="fixed-container" :style="[{ height: computedHeight, zIndex: fixedZindex }, fixedContainerStyle]">
-      <!-- header -->
-      <view class="fixed-header">
-        <!-- 自定义nav-bar -->
-        <view v-if="isCustomNavBar" class="nav-bar" :style="navBarStyle">
-          <!-- 状态栏 -->
-          <view v-if="statusBarHeight > 0" class="status-bar" :style="computedStatusBarStyle"></view>
-
-          <!-- 标题栏 -->
-          <view v-if="titleBarHeight > 0" class="title-bar" :style="computedTitleBarStyle">
-            <!-- 标题栏左侧 -->
-
-            <view :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginLeft: menuRect.rightGap + 'px', marginRight: menuRect.rightGap + 'px' }">
-              <slot name="titleLeft">
-                <view class="back-icon-container" :style="{ height: titleBarHeight + 'px' }" @click="back">
-                  <image class="back-icon" :style="backIconStyle" :src="backIcon" mode="aspectFit" />
-                </view>
-              </slot>
-            </view>
-
-            <!-- 标题栏内容 -->
-            <view class="title-bar-content" :style="{ height: titleBarHeight + 'px' }">
-              <slot name="titleContent">
-                <view class="title-bar-content-title" :style="{ lineHeight: titleBarHeight + 'px' }">
-                  {{ title }}
-                </view>
-              </slot>
-            </view>
-
-            <!-- 标题栏右侧 -->
-            <view class="title-bar-right" :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginRight: menuRect.rightGap + 'px', marginLeft: menuRect.rightGap + 'px' }">
-              <slot name="titleRight"> </slot>
-            </view>
-          </view>
-        </view>
-        <!-- header slot-->
-        <slot name="header"></slot>
-      </view>
-      <view class="fixed-content"></view>
-      <!-- footer -->
-      <view class="fixed-footer">
-        <view class="footer-slot">
-          <slot name="footer"></slot>
-        </view>
-        <view class="safe-bottom" :style="[{ background: footerBackground }]"></view>
-      </view>
+    <!-- footer -->
+    <view ref="footer" class="footer" :style="[footerFixedStyle]">
+      <slot name="footer"></slot>
     </view>
-    <slot name="fixed"></slot>
+
+    <!-- footer占位区域  -->
+    <view :style="[footerPlaceholderStyle]"> </view>
+
+    <!-- footer安全底部占位区域  -->
+    <view class="safe-bottom"> </view>
   </view>
 </template>
 
 <script>
+function debounce(fn, wait) {
+  let delay = wait || 300
+  let timer
+  return function () {
+    let args = arguments
+    if (timer) {
+      clearTimeout(timer)
+    }
+    let callNow = !timer
+    timer = setTimeout(() => {
+      timer = null
+    }, delay)
+    if (callNow) fn.apply(this, args)
+  }
+}
+
 export default {
   name: 'dimple-uni-container',
   props: {
@@ -99,7 +75,9 @@ export default {
       statusBarHeight: 0, // 自定义navbar状态栏高度
       titleBarHeight: 0, // 自定义navbar标题栏高度
       menuRect: {}, // 小程序胶囊按钮的rect信息
-      safeBottmVisible: true, // 是否显示安全距离
+
+      safeBottmVisible: true,
+      safeBottmStyle: {},
     }
   },
   computed: {
@@ -145,9 +123,14 @@ export default {
   },
   watch: {
     mutation: {
-      handler() {
+      handler: debounce(function () {
+        this.headerFixedStyle = {}
+        this.headerPlaceholderStyle = { height: '0px' }
+        this.footerFixedStyle = {}
+        this.footerPlaceholderStyle = { height: '0px' }
+        this.safeBottmVisible = true
         this.$nextTick(() => this.setStyle())
-      },
+      }, 300),
       deep: true,
     },
   },
@@ -192,30 +175,40 @@ export default {
       this.titleBarHeight = height
     },
 
+    // 设置安全距离高度
+    async setSafeHeight() {
+      this.safeBottmStyle = { background: this.footerBackground }
+      if (this.isApp) {
+        const { safeAreaInsets } = this.systemInfo
+        this.safeBottmHeight = safeAreaInsets.bottom / 2
+        this.safeBottmstyle = { background: this.footerBackground, height: this.safeBottmHeight + 'px' }
+        return
+      }
+      const safeBottmRect = await this.getDomRect('.safe-bottom')
+      this.safeBottmHeight = safeBottmRect.height
+    },
+
     // 设置占位区域
     async setStyle() {
-      this.fixedContainerStyle = {}
-      this.headerPlaceholderStyle = {}
-      this.footerPlaceholderStyle = {}
-      this.safeBottmVisible = true
-      await this.$nextTick()
-      const [containerRect, fixedHeaderRect, fixedFooterRect, safeBottomRect] = await Promise.all([
-        this.getDomRect('.container'),
-        this.getDomRect('.fixed-header'),
-        this.getDomRect('.fixed-footer'),
-        this.getDomRect('.safe-bottom'),
-      ])
-      this.safeBottmVisible = safeBottomRect.height !== fixedFooterRect.height
-      this.headerPlaceholderStyle = { height: fixedHeaderRect.height + 'px', background: this.background }
-      this.footerPlaceholderStyle = { height: (this.safeBottmVisible ? fixedFooterRect.height : 0) + 'px', background: this.background }
-      let fixedContainerTop = containerRect.left
-      if (this.isH5) fixedContainerTop += this.systemInfo.windowTop
-      this.fixedContainerStyle = {
-        position: 'fixed',
-        top: fixedContainerTop + 'px',
-        left: containerRect.left + 'px',
-        width: containerRect.width + 'px',
+      const [headerRect, footerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer')])
+      if (this.isH5) {
+        const [h5Header] = document.getElementsByTagName('uni-page-head')
+        headerRect.top += h5Header.clientHeight
+        footerRect.top += h5Header.clientHeight
       }
+      this.headerFixedStyle = {
+        position: 'fixed',
+        top: headerRect.top + 'px',
+        left: headerRect.left + 'px',
+      }
+
+      this.headerPlaceholderStyle = { height: headerRect.height + 'px' }
+      this.footerFixedStyle = {
+        position: 'fixed',
+        top: (footerRect.height > 0 ? footerRect.top - this.safeBottmHeight : footerRect.top) + 'px',
+        left: footerRect.left + 'px',
+      }
+      this.footerPlaceholderStyle = { height: (footerRect.height > 0 ? footerRect.height + this.safeBottmHeight : footerRect.height) + 'px', background: this.footerBackground }
     },
 
     // 返回方法
@@ -272,15 +265,14 @@ export default {
   z-index: 1;
 }
 
-.fixed-container {
+.safe-bottom {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 0;
-  display: flex;
-  flex-direction: column;
+  z-index: -1;
   pointer-events: none;
+  opacity: 0;
+  height: calc(constant(safe-area-inset-bottom) / 2);
+  /* 兼容 iOS < 11.2 */
+  height: calc(env(safe-area-inset-bottom) / 2);
 }
 
 .fixed-header {
