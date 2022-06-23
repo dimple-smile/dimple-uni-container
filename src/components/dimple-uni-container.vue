@@ -226,6 +226,7 @@ export default {
 
     // 设置占位区域
     async setStyle() {
+      if (this.isAndroid) return
       const [headerRect, footerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer')])
       if (this.isH5) {
         const [h5Header] = document.getElementsByTagName('uni-page-head')
