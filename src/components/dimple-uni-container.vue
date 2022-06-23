@@ -1,13 +1,50 @@
 <template>
-  <view ref="container" class="container" :style="{ zIndex: contentZindex, height: computedHeight, background: background }">
-    <!-- header placeholder-->
-    <view class="header" :style="[headerPlaceholderStyle]"> </view>
-    <!-- 内容区 -->
-    <view ref="content" class="content">
-      <!-- 默认slot -->
-      <view class="content-slot">
-        <slot></slot>
+  <view class="container" :style="{ height: computedHeight, background: background }">
+    <!-- header -->
+    <view ref="header" class="header" :style="[headerFixedStyle]">
+      <!-- 自定义nav-bar -->
+      <view v-if="isCustomNavBar" class="nav-bar" :style="navBarStyle">
+        <!-- 状态栏 -->
+        <view v-if="statusBarHeight > 0" class="status-bar" :style="computedStatusBarStyle"></view>
+
+        <!-- 标题栏 -->
+        <view v-if="titleBarHeight > 0" class="title-bar" :style="computedTitleBarStyle">
+          <!-- 标题栏左侧 -->
+
+          <view :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginLeft: menuRect.rightGap + 'px', marginRight: menuRect.rightGap + 'px' }">
+            <slot name="titleLeft">
+              <view class="back-icon-container" :style="{ height: titleBarHeight + 'px' }" @click="back">
+                <image class="back-icon" :style="backIconStyle" :src="backIcon" mode="aspectFit" />
+              </view>
+            </slot>
+          </view>
+
+          <!-- 标题栏内容 -->
+          <view class="title-bar-content" :style="{ height: titleBarHeight + 'px' }">
+            <slot name="titleContent">
+              <view class="title-bar-content-title" :style="{ lineHeight: titleBarHeight + 'px' }">
+                {{ title }}
+              </view>
+            </slot>
+          </view>
+
+          <!-- 标题栏右侧 -->
+          <view class="title-bar-right" :style="{ width: menuRect.width + 'px', height: titleBarHeight + 'px', marginRight: menuRect.rightGap + 'px', marginLeft: menuRect.rightGap + 'px' }">
+            <slot name="titleRight"> </slot>
+          </view>
+        </view>
       </view>
+
+      <!-- header slot-->
+      <slot name="header"></slot>
+    </view>
+
+    <view :style="[headerPlaceholderStyle]"> </view>
+
+    <!-- 内容区 -->
+    <view class="content">
+      <!-- 默认slot -->
+      <slot></slot>
     </view>
 
     <!-- footer -->
@@ -60,17 +97,21 @@ export default {
     },
     backIconStyle: { type: String, default: 'height: 17px;width: 9px;' }, // 返回icon的样式
     mutation: {}, // 突变数据，该数据变化会触发布局变化
-    customNavBar: {}, // 是否开启自定义头
-    contentZindex: { type: Number, default: 1 }, // 内容区zindex
-    fixedZindex: { type: Number, default: 0 }, // 固定区（header和footer）zindex
+
+    customNavBar: { type: Boolean }, // 是否开启自定义头
   },
   data() {
     return {
       systemInfo: {}, // 记录系统信息
-      loading: false, // 加载标识
+      loading: true, // 加载标识
+
+      headerFixedStyle: {},
+      footerFixedStyle: {},
+
       headerPlaceholderStyle: {},
       footerPlaceholderStyle: {},
-      fixedContainerStyle: {},
+
+      safeBottmHeight: 0, // 安全距离高度
       isCustomNavBar: false, // 是否开启自定义navbar的标识
       statusBarHeight: 0, // 自定义navbar状态栏高度
       titleBarHeight: 0, // 自定义navbar标题栏高度
@@ -81,6 +122,19 @@ export default {
     }
   },
   computed: {
+    computedHeight() {
+      if (this.height) return this.height
+      return this.systemInfo.windowHeight + 'px'
+    },
+    computedNavBarStyle() {
+      return `${this.navBarStyle}`
+    },
+    computedStatusBarStyle() {
+      return `height: ${this.statusBarHeight}px;${this.statusBarStyle}`
+    },
+    computedTitleBarStyle() {
+      return `height: ${this.titleBarHeight}px;${this.titleBarStyle}`
+    },
     isH5() {
       // #ifdef H5
       return true
@@ -105,21 +159,6 @@ export default {
     isAndroid() {
       return (this.systemInfo.platform + this.systemInfo.system).toLowerCase().indexOf('android') > -1
     },
-    computedHeight() {
-      if (this.height) return this.height
-      const { windowTop } = this.systemInfo
-      if (this.isH5) return `calc(100vh - ${windowTop}px)`
-      return '100vh'
-    },
-    computedNavBarStyle() {
-      return `${this.navBarStyle}`
-    },
-    computedStatusBarStyle() {
-      return `height: ${this.statusBarHeight}px;${this.statusBarStyle}`
-    },
-    computedTitleBarStyle() {
-      return `height: ${this.titleBarHeight}px;${this.titleBarStyle}`
-    },
   },
   watch: {
     mutation: {
@@ -138,12 +177,12 @@ export default {
     // 根据classname获取dom元素clientRect信息，并把方法promise化
     getDomRect(className) {
       const query = uni.createSelectorQuery().in(this)
-      return new Promise((res) =>
+      return new Promise((res) => {
         query
           .select(className)
           .boundingClientRect((data) => res(data))
           .exec()
-      )
+      })
     },
 
     // 获取胶囊Rect信息，兼容写法
@@ -160,13 +199,9 @@ export default {
     setCustomNavBar() {
       if (this.customNavBar === false) return
       if (this.height) return
-      const { windowTop, screenHeight, windowHeight } = this.systemInfo
-      let isCustomNavBar = false
-      if (this.isMp || this.isApp) isCustomNavBar = screenHeight === windowHeight
-      if (this.isH5) isCustomNavBar = windowTop === 0
-      if (this.customNavBar) isCustomNavBar = true
-      this.isCustomNavBar = isCustomNavBar
-      if (!isCustomNavBar) return
+      const { windowHeight, screenHeight } = this.systemInfo
+      this.isCustomNavBar = this.customNavBar || windowHeight === screenHeight
+      if (!this.isCustomNavBar) return
       // 开启自定义导航栏，设置自定义导航的style
       const { statusBarHeight } = this.systemInfo
       this.menuRect = this.getMenuButtonRect()
@@ -223,7 +258,8 @@ export default {
     this.systemInfo = uni.getSystemInfoSync()
     this.setCustomNavBar()
   },
-  mounted() {
+  async mounted() {
+    await this.setSafeHeight()
     this.setStyle()
   },
 }
@@ -235,33 +271,22 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
-  pointer-events: all;
 }
-
 .header {
   width: 100%;
-  z-index: -1;
-}
-
-.footer {
-  width: 100%;
-  z-index: -1;
-}
-
-.safe-bottom {
-  height: calc(env(safe-area-inset-bottom) / 2);
-}
-
-.content {
-  flex: 1;
   overflow: hidden;
   z-index: 1;
 }
 
-.content-slot {
-  height: 100%;
-  overflow: auto;
+.footer {
+  width: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.footer-slot {
+  width: 100%;
+  overflow: hidden;
   z-index: 1;
 }
 
@@ -275,17 +300,9 @@ export default {
   height: calc(env(safe-area-inset-bottom) / 2);
 }
 
-.fixed-header {
-  pointer-events: all;
-  width: 100%;
-}
-.fixed-content {
+.content {
   flex: 1;
-  pointer-events: none;
-}
-.fixed-footer {
-  pointer-events: all;
-  width: 100%;
+  overflow: auto;
 }
 
 .nav-bar {
@@ -321,3 +338,6 @@ export default {
   align-items: center;
 }
 </style>
+
+
+
