@@ -124,7 +124,7 @@ export default {
   computed: {
     computedHeight() {
       if (this.height) return this.height
-      if (this.isApp) return '100vh'
+      // if (this.isApp) return '100vh'
       return this.systemInfo.windowHeight + 'px'
     },
     computedNavBarStyle() {
