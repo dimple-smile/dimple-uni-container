@@ -124,7 +124,7 @@ export default {
   computed: {
     computedHeight() {
       if (this.height) return this.height
-      // if (this.isApp) return '100vh'
+      if (this.isH5) return '100%'
       return this.systemInfo.windowHeight + 'px'
     },
     computedNavBarStyle() {
@@ -226,6 +226,7 @@ export default {
 
     // 设置占位区域
     async setStyle() {
+      if (this.isH5) return
       if (this.isAndroid) return
       const [headerRect, footerRect] = await Promise.all([this.getDomRect('.header'), this.getDomRect('.footer')])
       if (this.isH5) {
